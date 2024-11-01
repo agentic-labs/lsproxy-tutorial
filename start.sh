@@ -1,12 +1,9 @@
 #!/bin/bash
 
-# Start lsproxy in the workspace directory
-cd /mnt/workspace
+cd /app
 /lsproxy &
 LSPROXY_PID=$!
 
-# Start marimo in the app directory
-cd /app
 marimo run tutorial.py --host 0.0.0.0 --port 7860 &
 MARIMO_PID=$!
 

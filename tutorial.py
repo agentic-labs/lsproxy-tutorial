@@ -362,7 +362,7 @@ def __(mo, subprocess):
 
     # Load in the diff
     diff_text = subprocess.check_output(
-        ["git", "diff", parent_commit], cwd="./trieve"
+        ["git", "diff", parent_commit], cwd="/mnt/workspace"
     ).decode("utf-8")
 
     mo.show_code(f"Output: Diff has {len(diff_text.splitlines())} lines")

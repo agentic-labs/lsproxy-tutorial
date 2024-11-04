@@ -24,7 +24,7 @@ USER root
 COPY start.sh /start.sh
 RUN chown -R appuser:appuser /mnt/workspace /start.sh /app
 
-COPY file_options.json tutorial.py ./
+COPY .marimo.toml file_options.json tutorial.py ./
 
 ENV CHECKOUT_LOCATION=/mnt/workspace
 ENV BASE_URL=http://localhost:4444/v1

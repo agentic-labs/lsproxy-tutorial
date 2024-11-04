@@ -2,7 +2,7 @@
 manager = "pip"
 
 [display]
-theme = "light"
+theme = "dark"
 code_editor_font_size = 14
 cell_output = "above"
 default_width = "medium"

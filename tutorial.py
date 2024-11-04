@@ -33,7 +33,7 @@ def __():
 
 @app.cell
 def __(mo):
-    mo.md(f"""### Welcome to the `lsproxy` tutorial! URL IS {os.environ.get("BASE_URL")} We'll be showing you how you can use `lsproxy` to easily navigate and search another codebase using python. Let's get started!\n> We will be using an open-source repo to demonstrate `lsproxy`. We chose [Trieve](https://github.com/devflowinc/trieve), a rust-based infrastructure solution for search, recommendations and RAG. They have rust for their backend, and typescript to run multiple frontend interfaces. We love their product and their team, check them out!""")
+    mo.md(f"""### Welcome to the `lsproxy` tutorial! We'll be showing you how you can use `lsproxy` to easily navigate and search another codebase using python. Let's get started!\n> We will be using an open-source repo to demonstrate `lsproxy`. We chose [Trieve](https://github.com/devflowinc/trieve), a rust-based infrastructure solution for search, recommendations and RAG. They have rust for their backend, and typescript to run multiple frontend interfaces. We love their product and their team, check them out!""")
     return
 
 

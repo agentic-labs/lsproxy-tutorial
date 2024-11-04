@@ -1,7 +1,7 @@
 import marimo
 
 __generated_with = "0.9.14"
-app = marimo.App(width="medium")
+app = marimo.App(width="medium", app_title="lsproxy tutorial")
 
 
 @app.cell
@@ -353,6 +353,12 @@ def __(diagram_shown, mo):
 
 
 @app.cell
+def __(mo):
+    mo.md("""<div style="height: 50px;"></div>""")
+    return
+
+
+@app.cell
 def __(example_3, mo):
     mo.stop(not example_3.value)
     mo.md(
@@ -673,19 +679,20 @@ def __(OpenAI, message, mo, openai_api_key_input, system):
                 },
             ],
         )
-    mo.vstack(
-        [
-            mo.show_code(),
-            mo.md("## AI summary of change blast radius:"),
-            mo.md(completion.choices[0].message.content),
-        ]
+    mo.callout(
+        mo.vstack(
+            [
+                mo.md("## AI summary of change blast radius:"),
+                mo.md(completion.choices[0].message.content),
+            ]
+        )
     )
     return client, completion
 
 
 @app.cell
 def __(mo):
-    mo.md("""<div style="height: 200px;"></div>""")
+    mo.md("""<div style="height: 400px;"></div>""")
     return
 
 
@@ -771,6 +778,7 @@ def __():
 @app.cell
 def __(create_lang_dropdown, json):
     def create_dropdowns(rust_value, js_value):
+        # This json was created with lsproxy via list_files and definitions_in_file.
         with open("file_options.json", "r") as f:
             file_with_symbol_count = json.load(f)
         js_dropdown = create_lang_dropdown(

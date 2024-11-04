@@ -1,4 +1,4 @@
-FROM agenticlabs/lsproxy:0.1.1
+FROM agenticlabs/lsproxy:0.1.2
 
 # Combine all apt operations and user/directory setup in one layer
 RUN apt-get update && apt-get install -y \

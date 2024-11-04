@@ -4,7 +4,7 @@ cd /app
 /lsproxy &
 LSPROXY_PID=$!
 
-marimo run tutorial.py --host 0.0.0.0 --port 7860 &
+marimo edit tutorial.py --host 0.0.0.0 --port 7860 &
 MARIMO_PID=$!
 
 # Handle shutdown gracefully

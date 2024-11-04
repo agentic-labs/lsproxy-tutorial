@@ -9,6 +9,7 @@ def __():
     import requests
     import json
     import sys
+    import os
     from typing import Dict, Any, Optional, List
 
     from lsproxy import GetReferencesRequest, FileRange, Position
@@ -24,6 +25,7 @@ def __():
         Position,
         json,
         mo,
+        os,
         requests,
         sys,
     )
@@ -53,51 +55,35 @@ def __(mo):
 
 @app.cell
 def __(mo):
-    mo.md("""Other than starting the `lsproxy` docker container, no initialization is required to use `lsproxy`. Here, our "initialization" is just reading in the files to make the tutorial easier to navigate! Please click the button below to get started.""")
-    return
-
-
-@app.cell
-def __(mo):
-    start_button = mo.ui.run_button(label="Click to initialize")
+    start_button = mo.ui.run_button(label="Okay now show me the good stuff!")
     start_button
     return (start_button,)
 
 
 @app.cell
-def __(get_files, mo, start_button):
-    # Reads all the files in the repo on initialization
-    mo.stop(not start_button.value)
-    file_symbol_dict = get_files()
-    return (file_symbol_dict,)
-
-
-@app.cell
 def __(mo):
-    mo.md("""<div style="height: 100px;"></div>""")
+    mo.md("""<div style="height: 50px;"></div>""")
     return
 
 
 @app.cell
-def __(file_symbol_dict, mo):
-    mo.stop(not file_symbol_dict)
-
-    mo.md(
-        """### `Example 1: Exploring symbols and their references in a file`\nYou'll see how easy it is to:\n\n- Get symbol definitions from a file.\n- Read the source code for any symbol.\n- Find references to the symbol across the codebase\n\n<p>Also note that we are only showing typescript and rust in this example, but we also support python!</p>\n---\n"""
-    )
+def __(mo, start_button):
+    mo.stop(not start_button.value)
+    mo.md("""### `Example 1: Exploring symbols and their references in a file`\nYou'll see how easy it is to:\n\n- Get symbol definitions from a file.\n- Read the source code for any symbol.\n- Find references to the symbol across the codebase\n\n<p>Also note that we are only showing typescript and rust in this example, but we also support python!</p>\n---\n""")
     return
 
 
 @app.cell
-def __(selections_ex1):
+def __(mo, selections_ex1, start_button):
+    mo.stop(not start_button.value)
     selections_ex1
     return
 
 
 @app.cell
-def __(code_language_select_ex1, file_dropdown_ex1, mo):
+def __(code_language_select_ex1, file_dropdown_ex1, mo, start_button):
     # This is just for controlling the flow of this tutorial
-    mo.stop(not file_dropdown_ex1.value)
+    mo.stop(not file_dropdown_ex1.value or not start_button.value)
     selected_file_first_time = True
     code_language_ex1 = code_language_select_ex1.value
     selected_file_ex1 = file_dropdown_ex1.value
@@ -110,7 +96,7 @@ def __(code_language_ex1, mo, selected_file_first_time):
     mo.stop(not selected_file_first_time)
 
     mo.md(
-        f"Note that you selected a file in {code_language_ex1}, but `lsproxy` wraps language servers for all the supported languages, and routes your request to the right one, so you don't have to worry about configuring servers for each language. Go ahead and try a different language!"
+        f"Note that a {code_language_ex1} file is selected, but `lsproxy` wraps language servers for all the supported languages, and routes your request to the right one, so you don't have to worry about configuring servers for each language. Go ahead and try a different language!"
     )
     return
 
@@ -176,10 +162,11 @@ def __(
     source_code_ex1 = api_client.read_source_code(file_range_ex1).source_code
 
     # Get references to the symbol and optionally include context lines surrounding the usage
-    reference_request_ex1 = GetReferencesRequest(
-        identifier_position=selected_symbol_ex1.identifier_position,
-        include_code_context_lines=2,
-    )
+    with mo.status.spinner():
+        reference_request_ex1 = GetReferencesRequest(
+            identifier_position=selected_symbol_ex1.identifier_position,
+            include_code_context_lines=2,
+        )
     reference_results_ex1 = api_client.find_references(reference_request_ex1)
     viewed_symbol = True
     mo.show_code()
@@ -357,23 +344,14 @@ def __(example_3, mo):
 
 
 @app.cell
-def __(mo, subprocess):
+def __(os, subprocess):
     parent_commit = "1910d6867877bfdd64ca822e266372335392a8be"
-
+    checkout_location = os.environ.get("CHECKOUT_LOCATION")
     # Load in the diff
     diff_text = subprocess.check_output(
-        ["git", "diff", parent_commit], cwd="/mnt/workspace"
+        ["git", "diff", parent_commit], cwd=checkout_location
     ).decode("utf-8")
-
-    mo.show_code(f"Output: Diff has {len(diff_text.splitlines())} lines")
-    return diff_text, parent_commit
-
-
-@app.cell
-def __(example_3, mo):
-    mo.stop(not example_3.value)
-    mo.md("""First, we extract affected lines from the diff text.""")
-    return
+    return checkout_location, diff_text, parent_commit
 
 
 @app.cell
@@ -413,9 +391,8 @@ def __(example_3, mo):
 
 
 @app.cell
-def __(BaseModel, GetReferencesRequest, List, Set, Tuple, api_client, mo):
+def __(BaseModel):
     from lsproxy import FilePosition
-
 
     class HierarchyItem(BaseModel):
         name: str
@@ -431,17 +408,29 @@ def __(BaseModel, GetReferencesRequest, List, Set, Tuple, api_client, mo):
                     self.defined_at.position.character,
                 )
             )
+    return FilePosition, HierarchyItem
 
 
+@app.cell
+def __(
+    FilePosition,
+    GetReferencesRequest,
+    HierarchyItem,
+    List,
+    Set,
+    Tuple,
+    api_client,
+    mo,
+):
     def get_symbols_containing_positions(
         target_positions: List[FilePosition],
     ) -> List[HierarchyItem]:
         file_path = target_positions[0].path
 
-        #######################
-        ### Get definitions ###
-        #######################
+        # Get all the definitions in the file
         symbols = api_client.definitions_in_file(file_path)
+
+        # And save the ones that contain some of our affected lines
         symbols_containing_position = {
             HierarchyItem(
                 name=symbol.name,
@@ -504,8 +493,6 @@ def __(BaseModel, GetReferencesRequest, List, Set, Tuple, api_client, mo):
 
     mo.show_code()
     return (
-        FilePosition,
-        HierarchyItem,
         get_symbols_containing_positions,
         propagate_changes_through_codebase,
     )
@@ -522,8 +509,9 @@ def __(
     propagate_changes_through_codebase,
 ):
     affected_files = list(affected_lines.keys())
-    lsp_files = api_client.list_files()
-    affected_code_files = filter(lambda file: file in lsp_files, affected_files)
+    with mo.status.spinner():
+        workspace_files = api_client.list_files()
+    affected_code_files = filter(lambda file: file in workspace_files, affected_files)
 
     symbols_changed_directly = set()
     for file in affected_code_files:
@@ -545,8 +533,8 @@ def __(
         all_edges,
         all_nodes,
         file,
-        lsp_files,
         symbols_changed_directly,
+        workspace_files,
     )
 
 
@@ -567,115 +555,72 @@ def __(
 
 
 @app.cell
-def __(HierarchyItem, Set, Tuple):
-    def hierarchy_to_mermaid(
-        nodes: Set[HierarchyItem],
-        edges: Set[Tuple[HierarchyItem, HierarchyItem]],
-        symbols_changed_directly: Set[HierarchyItem],
-    ) -> str:
-        """
-        Convert hierarchy nodes and edges to a Mermaid diagram string with subgraphs by file.
-        Uses hash codes as node identifiers. Nodes that were changed directly are colored red.
-
-        Args:
-            nodes: Set of HierarchyItem objects representing code symbols
-            edges: Set of tuples containing (from_symbol, to_symbol) relationships
-            symbols_changed_directly: Set of HierarchyItem objects that were changed directly
-
-        Returns:
-            str: Mermaid diagram representation of the hierarchy with file-based subgraphs
-        """
-        mermaid_lines = [
-            "%%{",
-            "  init: {",
-            "    'flowchart': {",
-            "      'rankSpacing': 100,",  # Increase vertical space between ranks
-            "      'nodeSpacing': 50,",  # Increase horizontal space between nodes
-            "      'padding': 20",  # Add padding around the entire diagram
-            "    }",
-            "  }",
-            "}%%",
-            "graph TD",
-        ]
-
-        # Track nodes that need red styling
-        direct_node_ids = set()
-        indirect_node_ids = set()
-
-        # Group nodes by file
-        nodes_by_file = {}
-        for node in nodes:
-            file_path = node.defined_at.path
-            if file_path not in nodes_by_file:
-                nodes_by_file[file_path] = []
-            nodes_by_file[file_path].append(node)
-
-            # Track node IDs that need to be colored red
-            if node in symbols_changed_directly:
-                direct_node_ids.add(f"node{abs(hash(node))}")
-            else:
-                indirect_node_ids.add(f"node{abs(hash(node))}")
-
-        # Create subgraphs for each file
-        for file_idx, (file_path, file_nodes) in enumerate(nodes_by_file.items()):
-            # Create subgraph with unique ID
-            subgraph_id = f"subgraph_{file_idx}"
-            mermaid_lines.append(f"    subgraph {subgraph_id}[{file_path}]")
-
-            # Add nodes for this file
-            for node in file_nodes:
-                # Escape quotes and special characters in names
-                escaped_name = node.name.replace('"', '\\"')
-                # Add kind as a suffix in italics
-                label = f'"{escaped_name}<br><i>{node.kind}</i>"'
-                # Use absolute value of hash to ensure positive ID
-                node_id = f"node{abs(hash(node))}"
-                mermaid_lines.append(f"        {node_id}[{label}]")
-
-            # Close subgraph
-            mermaid_lines.append("    end")
-
-        # Add edges using hash IDs (outside subgraphs)
-        for from_node, to_node in edges:
-            from_id = f"node{abs(hash(from_node))}"
-            to_id = f"node{abs(hash(to_node))}"
-            mermaid_lines.append(f"    {from_id} --> {to_id}")
-
-        # Add styling for red nodes
-        for node_id in indirect_node_ids:
-            mermaid_lines.append(f"    style {node_id} fill:#ffcccc,color:#000")
-        for node_id in direct_node_ids:
-            mermaid_lines.append(f"    style {node_id} fill:#ffffff,color:#000")
-
-        return "\n".join(mermaid_lines)
-    return (hierarchy_to_mermaid,)
-
-
-@app.cell
 def __(affected_lines, all_nodes, mo):
     diff_files = set(affected_lines.keys())
     call_hierarchy_files = set([n.defined_at.path for n in all_nodes])
     affected_files_not_in_diff = call_hierarchy_files - diff_files
     affected_files_not_in_diff_str = '\n'.join([f'{i+1}. {f}' for i, f in enumerate(affected_files_not_in_diff)])
+    ready_to_summarize=True
     mo.md(f"We now see code paths crossing {len(affected_files_not_in_diff)} files that are not in the diff:\n\n{affected_files_not_in_diff_str}")
     return (
         affected_files_not_in_diff,
         affected_files_not_in_diff_str,
         call_hierarchy_files,
         diff_files,
+        ready_to_summarize,
     )
 
 
 @app.cell
-def __(mo):
-    mo.md("""<div style="height: 400px;"></div>""")
-    return
+def __(
+    affected_files_not_in_diff,
+    affected_files_not_in_diff_str,
+    all_nodes,
+    diff_text,
+    mo,
+    ready_to_summarize,
+):
+    from openai import OpenAI
+    mo.stop(not ready_to_summarize)
+    openai_api_key_input = mo.ui.text("", label="openai api key", kind="password")
+    system = f"You are a precise and meticulous code reviewer. Explain clearly and concisely how the changed code flows through the related code in {affected_files_not_in_diff_str}"
+    related_code_not_in_the_diff = [f"{n.defined_at.path}\n```\n{n.source_code}\n```" for n in all_nodes if n.defined_at.path in affected_files_not_in_diff]
+    related_code_not_in_the_diff_str = "\n".join(related_code_not_in_the_diff)
+
+    message = f"# Diff:\n\n ```\n{diff_text}\n``` \n\n# Related code:\n\n{related_code_not_in_the_diff_str}"
+    mo.vstack([
+        mo.md("Let's use gpt-4o to summarize how other parts of the codebase are affected by our change."),
+        openai_api_key_input,
+        mo.show_code()
+    ])
+    return (
+        OpenAI,
+        message,
+        openai_api_key_input,
+        related_code_not_in_the_diff,
+        related_code_not_in_the_diff_str,
+        system,
+    )
 
 
 @app.cell
-def __(mo):
-    mo.md("""Thanks for trying `lsproxy`! See the README on our [github repo](https://github.com/agentic-labs/lsproxy) to run on your own code. Or if you want to play with the code in this example, you can use:\n\n```./examples/run.sh --edit```""")
-    return
+def __(OpenAI, message, mo, openai_api_key_input, system):
+    mo.stop(not openai_api_key_input.value)
+    client = OpenAI(api_key=openai_api_key_input.value)
+    with mo.status.spinner():
+        completion = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": message, }
+            ]
+        )
+    mo.vstack([
+        mo.show_code(),
+        mo.md("## AI summary of change blast radius:"),
+        mo.md(completion.choices[0].message.content)
+    ])
+    return client, completion
 
 
 @app.cell
@@ -685,9 +630,9 @@ def __():
 
 
 @app.cell
-def __(create_dropdowns, create_selector_dict, file_symbol_dict, mo):
+def __(create_dropdowns, create_selector_dict, mo):
     # UI Elements for the first example
-    js_dropdown_1, rs_dropdown_1 = create_dropdowns(file_symbol_dict, "server/src/handlers/chunk_handler.rs: (65 symbols)")
+    js_dropdown_1, rs_dropdown_1 = create_dropdowns("server/src/handlers/chunk_handler.rs: (65 symbols)")
     selector_dict_1 = create_selector_dict(js_dropdown_1, rs_dropdown_1)
     code_language_select_ex1 = mo.ui.radio(options=["typescript", "rust"], value="rust")
     return (
@@ -711,9 +656,9 @@ def __(code_language_select_ex1, mo, selector_dict_1):
 
 
 @app.cell
-def __(create_dropdowns, create_selector_dict, file_symbol_dict, mo):
+def __(create_dropdowns, create_selector_dict, mo):
     # UI Elements for the second example
-    js_dropdown_2, rs_dropdown_2 = create_dropdowns(file_symbol_dict, "server/src/handlers/analytics_handler.rs: (15 symbols)")
+    js_dropdown_2, rs_dropdown_2 = create_dropdowns("server/src/handlers/analytics_handler.rs: (15 symbols)")
     selector_dict_2 = create_selector_dict(js_dropdown_2, rs_dropdown_2)
     submit_button_2 = mo.ui.run_button(label="Find referenced files")
     code_language_select_ex2 = mo.ui.radio(options=["typescript", "rust"], value="rust")
@@ -748,31 +693,10 @@ def __():
 
 
 @app.cell
-def __(api_client, mo):
-    def get_files():
-        file_dict = {}
-        with mo.status.spinner():
-            files = api_client.list_files()
-        for file in mo.status.progress_bar(
-            files, title="Files processed", remove_on_exit=True
-        ):
-            symbols = api_client.definitions_in_file(file)
-            file_dict[file] = symbols
-        return file_dict
-    return (get_files,)
-
-
-@app.cell
-def __(create_lang_dropdown):
-    def create_dropdowns(file_dict, value = None):
-        file_with_symbol_count = [
-            (file, len(symbols))
-            for file, symbols in file_dict.items()
-            if len(symbols) > 0
-        ]
-        file_with_symbol_count = sorted(
-            file_with_symbol_count, key=lambda item: -item[1]
-        )
+def __(create_lang_dropdown, json):
+    def create_dropdowns(value = None):
+        with open("file_options.json", "r") as f:
+            file_with_symbol_count = json.load(f)
         js_dropdown = create_lang_dropdown(
             file_with_symbol_count,
             ["ts", "tsx", "js", "jsx"],
@@ -964,6 +888,91 @@ def __():
 
         return "\n".join(mermaid_lines)
     return (generate_reference_diagram,)
+
+
+@app.cell
+def __(HierarchyItem, Set, Tuple):
+    def hierarchy_to_mermaid(
+        nodes: Set[HierarchyItem],
+        edges: Set[Tuple[HierarchyItem, HierarchyItem]],
+        symbols_changed_directly: Set[HierarchyItem],
+    ) -> str:
+        """
+        Convert hierarchy nodes and edges to a Mermaid diagram string with subgraphs by file.
+        Uses hash codes as node identifiers. Nodes that were changed directly are colored red.
+
+        Args:
+            nodes: Set of HierarchyItem objects representing code symbols
+            edges: Set of tuples containing (from_symbol, to_symbol) relationships
+            symbols_changed_directly: Set of HierarchyItem objects that were changed directly
+
+        Returns:
+            str: Mermaid diagram representation of the hierarchy with file-based subgraphs
+        """
+        mermaid_lines = [
+            "%%{",
+            "  init: {",
+            "    'flowchart': {",
+            "      'rankSpacing': 100,",  # Increase vertical space between ranks
+            "      'nodeSpacing': 50,",  # Increase horizontal space between nodes
+            "      'padding': 20",  # Add padding around the entire diagram
+            "    }",
+            "  }",
+            "}%%",
+            "graph TD",
+        ]
+
+        # Track nodes that need red styling
+        direct_node_ids = set()
+        indirect_node_ids = set()
+
+        # Group nodes by file
+        nodes_by_file = {}
+        for node in nodes:
+            file_path = node.defined_at.path
+            if file_path not in nodes_by_file:
+                nodes_by_file[file_path] = []
+            nodes_by_file[file_path].append(node)
+
+            # Track node IDs that need to be colored red
+            if node in symbols_changed_directly:
+                direct_node_ids.add(f"node{abs(hash(node))}")
+            else:
+                indirect_node_ids.add(f"node{abs(hash(node))}")
+
+        # Create subgraphs for each file
+        for file_idx, (file_path, file_nodes) in enumerate(nodes_by_file.items()):
+            # Create subgraph with unique ID
+            subgraph_id = f"subgraph_{file_idx}"
+            mermaid_lines.append(f"    subgraph {subgraph_id}[{file_path}]")
+
+            # Add nodes for this file
+            for node in file_nodes:
+                # Escape quotes and special characters in names
+                escaped_name = node.name.replace('"', '\\"')
+                # Add kind as a suffix in italics
+                label = f'"{escaped_name}<br><i>{node.kind}</i>"'
+                # Use absolute value of hash to ensure positive ID
+                node_id = f"node{abs(hash(node))}"
+                mermaid_lines.append(f"        {node_id}[{label}]")
+
+            # Close subgraph
+            mermaid_lines.append("    end")
+
+        # Add edges using hash IDs (outside subgraphs)
+        for from_node, to_node in edges:
+            from_id = f"node{abs(hash(from_node))}"
+            to_id = f"node{abs(hash(to_node))}"
+            mermaid_lines.append(f"    {from_id} --> {to_id}")
+
+        # Add styling for red nodes
+        for node_id in indirect_node_ids:
+            mermaid_lines.append(f"    style {node_id} fill:#ffcccc,color:#000")
+        for node_id in direct_node_ids:
+            mermaid_lines.append(f"    style {node_id} fill:#ffffff,color:#000")
+
+        return "\n".join(mermaid_lines)
+    return (hierarchy_to_mermaid,)
 
 
 if __name__ == "__main__":

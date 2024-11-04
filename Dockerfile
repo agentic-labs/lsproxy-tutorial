@@ -11,10 +11,8 @@ RUN apt-get update && apt-get install -y \
     && chown -R appuser:appuser /mnt/workspace /usr/local/cargo
 
 WORKDIR /app
-COPY requirements.txt tutorial.py ./
+COPY requirements.txt ./
 RUN pip install --break-system-packages -r requirements.txt
-
-EXPOSE 7860
 
 # Combine git operations and file ownership changes in one layer
 USER appuser
@@ -24,7 +22,11 @@ RUN git clone https://github.com/devflowinc/trieve /mnt/workspace && \
 
 USER root
 COPY start.sh /start.sh
-RUN chmod +x /start.sh && chown -R appuser:appuser /mnt/workspace /start.sh /app
+RUN chown -R appuser:appuser /mnt/workspace /start.sh /app
+
+COPY file_options.json tutorial.py ./
+ENV CHECKOUT_LOCATION=/mnt/workspace
+EXPOSE 7860
 
 USER appuser
 CMD ["/start.sh"]

@@ -185,7 +185,7 @@ def __(
             identifier_position=selected_symbol_ex1.identifier_position,
             include_code_context_lines=2,
         )
-    reference_results_ex1 = api_client.find_references(reference_request_ex1)
+        reference_results_ex1 = api_client.find_references(reference_request_ex1)
     viewed_symbol = True
     mo.show_code()
     return (

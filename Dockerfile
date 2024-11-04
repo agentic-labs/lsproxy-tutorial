@@ -30,6 +30,7 @@ ENV CHECKOUT_LOCATION=/mnt/workspace
 ENV BASE_URL=http://localhost:4444/v1
 
 EXPOSE 7860
+EXPOSE 4444
 
 USER appuser
 CMD ["/start.sh"]

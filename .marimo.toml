@@ -1,0 +1,35 @@
+[package_management]
+manager = "pip"
+
+[display]
+theme = "light"
+code_editor_font_size = 14
+cell_output = "above"
+default_width = "medium"
+dataframes = "rich"
+
+[server]
+browser = "default"
+follow_symlink = false
+
+[runtime]
+auto_instantiate = true
+auto_reload = "off"
+on_cell_change = "autorun"
+
+[save]
+autosave = "after_delay"
+autosave_delay = 1000
+format_on_save = false
+
+[keymap]
+preset = "default"
+
+[keymap.overrides]
+
+[formatting]
+line_length = 79
+
+[completion]
+activate_on_typing = true
+copilot = false

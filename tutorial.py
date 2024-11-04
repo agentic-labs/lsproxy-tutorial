@@ -15,6 +15,7 @@ def __():
     from lsproxy import GetReferencesRequest, FileRange, Position
 
     import marimo as mo
+    get_example1_unlocked, set_example1_unlocked = mo.state(False)
     return (
         Any,
         Dict,
@@ -23,17 +24,21 @@ def __():
         List,
         Optional,
         Position,
+        get_example1_unlocked,
         json,
         mo,
         os,
         requests,
+        set_example1_unlocked,
         sys,
     )
 
 
 @app.cell
 def __(mo):
-    mo.md(f"""### Welcome to the `lsproxy` tutorial! We'll be showing you how you can use `lsproxy` to easily navigate and search another codebase using python. Let's get started!\n> We will be using an open-source repo to demonstrate `lsproxy`. We chose [Trieve](https://github.com/devflowinc/trieve), a rust-based infrastructure solution for search, recommendations and RAG. They have rust for their backend, and typescript to run multiple frontend interfaces. We love their product and their team, check them out!""")
+    mo.md(
+        f"""### Welcome to the [`lsproxy`](https://github.com/agentic-labs/lsproxy) tutorial! We'll be showing you how you can use `lsproxy` to easily navigate and search another codebase using python. Let's get started!\nIf you like what you see here be sure to check us out and give us a like on our [github](https://github.com/agentic-labs/lsproxy)!\n> We will be using an open-source repo to demonstrate `lsproxy`. We chose [Trieve](https://github.com/devflowinc/trieve), a rust-based infrastructure solution for search, recommendations and RAG. They have rust for their backend, and typescript to run multiple frontend interfaces. We love their product and their team, check them out!"""
+    )
     return
 
 
@@ -60,8 +65,8 @@ def __(mo, os):
 
 
 @app.cell
-def __(mo):
-    start_button = mo.ui.run_button(label="Okay now show me the good stuff!")
+def __(mo, set_example1_unlocked):
+    start_button = mo.ui.run_button(label="Okay now show me the good stuff!", on_change=lambda v: set_example1_unlocked(True))
     start_button
     return (start_button,)
 
@@ -73,33 +78,40 @@ def __(mo):
 
 
 @app.cell
-def __(mo, start_button):
-    mo.stop(not start_button.value)
-    mo.md("""### `Example 1: Exploring symbols and their references in a file`\nYou'll see how easy it is to:\n\n- Get symbol definitions from a file.\n- Read the source code for any symbol.\n- Find references to the symbol across the codebase\n\n<p>Also note that we are only showing typescript and rust in this example, but we also support python!</p>\n---\n""")
-    return
+def __(get_example1_unlocked, mo):
+    mo.stop(not get_example1_unlocked())
+    example1_unlocked = True
+    mo.md(
+        """### `Example 1: Exploring symbols and their references in a file`\nYou'll see how easy it is to:\n\n- Get symbol definitions from a file.\n- Read the source code for any symbol.\n- Find references to the symbol across the codebase\n\n<p>Also note that we are only showing typescript and rust in this example, but we also support python!</p>\n---\n"""
+    )
+    return (example1_unlocked,)
 
 
 @app.cell
-def __(mo, selections_ex1, start_button):
-    mo.stop(not start_button.value)
+def __(get_example1_unlocked, mo, selections_ex1):
+    mo.stop(not get_example1_unlocked())
     selections_ex1
     return
 
 
 @app.cell
-def __(code_language_select_ex1, file_dropdown_ex1, mo, start_button):
+def __(
+    code_language_select_ex1,
+    file_dropdown_ex1,
+    get_example1_unlocked,
+    mo,
+):
     # This is just for controlling the flow of this tutorial
-    mo.stop(not file_dropdown_ex1.value or not start_button.value)
-    selected_file_first_time = True
+    mo.stop(not file_dropdown_ex1.value or not get_example1_unlocked())
     code_language_ex1 = code_language_select_ex1.value
     selected_file_ex1 = file_dropdown_ex1.value
-    return code_language_ex1, selected_file_ex1, selected_file_first_time
+    return code_language_ex1, selected_file_ex1
 
 
 @app.cell
-def __(code_language_ex1, mo, selected_file_first_time):
+def __(code_language_ex1, get_example1_unlocked, mo):
     # This is just for controlling the flow of this tutorial
-    mo.stop(not selected_file_first_time)
+    mo.stop(not get_example1_unlocked())
 
     mo.md(
         f"Note that a {code_language_ex1} file is selected, but `lsproxy` wraps language servers for all the supported languages, and routes your request to the right one, so you don't have to worry about configuring servers for each language. Go ahead and try a different language!"
@@ -236,10 +248,14 @@ def __(example_2, mo):
 @app.cell
 def __(ex2_unlocked, mo, selections_2):
     mo.stop(not ex2_unlocked)
-    mo.vstack([
-    mo.md("""### Example 2: Exploring connections between files\nThe examples above are similar to the kind of functionality you can find in your IDE, but having everything accessible with easy python functions means that you can compose these operations to be much more powerful.\n\nIn this example, we show:\n\n- Finding all the files that reference a given file\n- Tagging each file with the symbols it references\n\n---"""),
-    selections_2,
-    ])
+    mo.vstack(
+        [
+            mo.md(
+                """### Example 2: Exploring connections between files\nThe examples above are similar to the kind of functionality you can find in your IDE, but having everything accessible with easy python functions means that you can compose these operations to be much more powerful.\n\nIn this example, we show:\n\n- Finding all the files that reference a given file\n- Tagging each file with the symbols it references\n\n---"""
+            ),
+            selections_2,
+        ]
+    )
     return
 
 
@@ -275,7 +291,9 @@ def __(
         reference_request_ex2 = GetReferencesRequest(
             identifier_position=symbol.identifier_position,
         )
-        references_ex2 = api_client.find_references(reference_request_ex2).references
+        references_ex2 = api_client.find_references(
+            reference_request_ex2
+        ).references
 
         # Save which symbols were referenced by which file
         for ref in references_ex2:
@@ -308,9 +326,13 @@ def __(ex2_unlocked, mo):
 @app.cell
 def __(generate_reference_diagram, mo, referenced_symbols_in_file_dict):
     if not referenced_symbols_in_file_dict:
-        mermaid_diagram = generate_reference_diagram("No external references found")
+        mermaid_diagram = generate_reference_diagram(
+            "No external references found"
+        )
     else:
-        mermaid_diagram = generate_reference_diagram(referenced_symbols_in_file_dict)
+        mermaid_diagram = generate_reference_diagram(
+            referenced_symbols_in_file_dict
+        )
     diagram_shown = True
     mo.mermaid(mermaid_diagram)
     return diagram_shown, mermaid_diagram
@@ -364,6 +386,7 @@ def __(os, subprocess):
 def __(Dict, List, Tuple, diff_text, io, mo):
     from unidiff import PatchSet
 
+
     def parse_diff(diff_text) -> Tuple[Dict[str, List[int]], str]:
         patch = PatchSet(io.StringIO(diff_text))
         affected_lines = {}
@@ -399,6 +422,7 @@ def __(example_3, mo):
 @app.cell
 def __(BaseModel):
     from lsproxy import FilePosition
+
 
     class HierarchyItem(BaseModel):
         name: str
@@ -451,7 +475,9 @@ def __(
         return symbols_containing_position
 
 
-    def propagate_changes_through_codebase(symbols_changed_directly: List[FilePosition]):
+    def propagate_changes_through_codebase(
+        symbols_changed_directly: List[FilePosition],
+    ):
         """
         Compute the chain of code symbols that touch the code at the starting positions.
         """
@@ -517,7 +543,9 @@ def __(
     affected_files = list(affected_lines.keys())
     with mo.status.spinner():
         workspace_files = api_client.list_files()
-    affected_code_files = filter(lambda file: file in workspace_files, affected_files)
+    affected_code_files = filter(
+        lambda file: file in workspace_files, affected_files
+    )
 
     symbols_changed_directly = set()
     for file in affected_code_files:
@@ -526,10 +554,14 @@ def __(
             FilePosition(path=file, position=Position(line=line, character=0))
             for line in affected_lines[file]
         ]
-        symbols_changed_directly.update(get_symbols_containing_positions(affected_positions))
+        symbols_changed_directly.update(
+            get_symbols_containing_positions(affected_positions)
+        )
 
     # And then recursively follow the affected symbol through the codebase by following references
-    all_nodes, all_edges = propagate_changes_through_codebase(symbols_changed_directly)
+    all_nodes, all_edges = propagate_changes_through_codebase(
+        symbols_changed_directly
+    )
 
     mo.show_code()
     return (
@@ -565,9 +597,13 @@ def __(affected_lines, all_nodes, mo):
     diff_files = set(affected_lines.keys())
     call_hierarchy_files = set([n.defined_at.path for n in all_nodes])
     affected_files_not_in_diff = call_hierarchy_files - diff_files
-    affected_files_not_in_diff_str = '\n'.join([f'{i+1}. {f}' for i, f in enumerate(affected_files_not_in_diff)])
-    ready_to_summarize=True
-    mo.md(f"We now see code paths crossing {len(affected_files_not_in_diff)} files that are not in the diff:\n\n{affected_files_not_in_diff_str}")
+    affected_files_not_in_diff_str = "\n".join(
+        [f"{i+1}. {f}" for i, f in enumerate(affected_files_not_in_diff)]
+    )
+    ready_to_summarize = True
+    mo.md(
+        f"We now see code paths crossing {len(affected_files_not_in_diff)} files that are not in the diff:\n\n{affected_files_not_in_diff_str}"
+    )
     return (
         affected_files_not_in_diff,
         affected_files_not_in_diff_str,
@@ -587,18 +623,31 @@ def __(
     ready_to_summarize,
 ):
     from openai import OpenAI
+
     mo.stop(not ready_to_summarize)
     openai_api_key_input = mo.ui.text("", label="openai api key", kind="password")
-    system = f"You are a precise and meticulous code reviewer. Explain clearly and concisely how the changed code flows through the related code in {affected_files_not_in_diff_str}"
-    related_code_not_in_the_diff = [f"{n.defined_at.path}\n```\n{n.source_code}\n```" for n in all_nodes if n.defined_at.path in affected_files_not_in_diff]
+    system = f"""
+    You are a precise and meticulous code reviewer.
+    Explain clearly and concisely how the changed code flows
+    through the related code in {affected_files_not_in_diff_str}
+    """
+    related_code_not_in_the_diff = [
+        f"{n.defined_at.path}\n```\n{n.source_code}\n```"
+        for n in all_nodes
+        if n.defined_at.path in affected_files_not_in_diff
+    ]
     related_code_not_in_the_diff_str = "\n".join(related_code_not_in_the_diff)
 
     message = f"# Diff:\n\n ```\n{diff_text}\n``` \n\n# Related code:\n\n{related_code_not_in_the_diff_str}"
-    mo.vstack([
-        mo.md("Let's use gpt-4o to summarize how other parts of the codebase are affected by our change."),
-        openai_api_key_input,
-        mo.show_code()
-    ])
+    mo.vstack(
+        [
+            mo.md(
+                "Let's use gpt-4o to summarize how other parts of the codebase are affected by our change."
+            ),
+            openai_api_key_input,
+            mo.show_code(),
+        ]
+    )
     return (
         OpenAI,
         message,
@@ -618,20 +667,27 @@ def __(OpenAI, message, mo, openai_api_key_input, system):
             model="gpt-4o",
             messages=[
                 {"role": "system", "content": system},
-                {"role": "user", "content": message, }
-            ]
+                {
+                    "role": "user",
+                    "content": message,
+                },
+            ],
         )
-    mo.vstack([
-        mo.show_code(),
-        mo.md("## AI summary of change blast radius:"),
-        mo.md(completion.choices[0].message.content)
-    ])
+    mo.vstack(
+        [
+            mo.show_code(),
+            mo.md("## AI summary of change blast radius:"),
+            mo.md(completion.choices[0].message.content),
+        ]
+    )
     return client, completion
+
 
 @app.cell
 def __(mo):
     mo.md("""<div style="height: 200px;"></div>""")
     return
+
 
 @app.cell
 def __():
@@ -642,9 +698,14 @@ def __():
 @app.cell
 def __(create_dropdowns, create_selector_dict, mo):
     # UI Elements for the first example
-    js_dropdown_1, rs_dropdown_1 = create_dropdowns("server/src/handlers/chunk_handler.rs: (65 symbols)")
+    js_dropdown_1, rs_dropdown_1 = create_dropdowns(
+        "server/src/handlers/chunk_handler.rs: (65 symbols)",
+        "frontends/search/src/hooks/useSearch.ts: (16 symbols)",
+    )
     selector_dict_1 = create_selector_dict(js_dropdown_1, rs_dropdown_1)
-    code_language_select_ex1 = mo.ui.radio(options=["typescript", "rust"], value="rust")
+    code_language_select_ex1 = mo.ui.radio(
+        options=["typescript", "rust"], value="rust"
+    )
     return (
         code_language_select_ex1,
         js_dropdown_1,
@@ -668,10 +729,15 @@ def __(code_language_select_ex1, mo, selector_dict_1):
 @app.cell
 def __(create_dropdowns, create_selector_dict, mo):
     # UI Elements for the second example
-    js_dropdown_2, rs_dropdown_2 = create_dropdowns("server/src/handlers/analytics_handler.rs: (15 symbols)")
+    js_dropdown_2, rs_dropdown_2 = create_dropdowns(
+        "server/src/handlers/analytics_handler.rs: (15 symbols)",
+        "frontends/search/src/hooks/useSearch.ts: (16 symbols)",
+    )
     selector_dict_2 = create_selector_dict(js_dropdown_2, rs_dropdown_2)
     submit_button_2 = mo.ui.run_button(label="Find referenced files")
-    code_language_select_ex2 = mo.ui.radio(options=["typescript", "rust"], value="rust")
+    code_language_select_ex2 = mo.ui.radio(
+        options=["typescript", "rust"], value="rust"
+    )
     return (
         code_language_select_ex2,
         js_dropdown_2,
@@ -704,16 +770,17 @@ def __():
 
 @app.cell
 def __(create_lang_dropdown, json):
-    def create_dropdowns(value = None):
+    def create_dropdowns(rust_value, js_value):
         with open("file_options.json", "r") as f:
             file_with_symbol_count = json.load(f)
         js_dropdown = create_lang_dropdown(
             file_with_symbol_count,
             ["ts", "tsx", "js", "jsx"],
-            "Select a typescript/javascript file ->", None
+            "Select a typescript/javascript file ->",
+            js_value,
         )
         rs_dropdown = create_lang_dropdown(
-            file_with_symbol_count, ["rs"], "Select a rust file ->", value
+            file_with_symbol_count, ["rs"], "Select a rust file ->", rust_value
         )
         return js_dropdown, rs_dropdown
     return (create_dropdowns,)
@@ -727,10 +794,7 @@ def __(mo):
             for file, symbols in file_symbol_dict
             if file.split(".")[-1] in endings
         }
-        if value:
-            return mo.ui.dropdown(options=file_options, label=label, value=value)
-        else:
-            return mo.ui.dropdown(options=file_options, label=label)
+        return mo.ui.dropdown(options=file_options, label=label, value=value)
     return (create_lang_dropdown,)
 
 
@@ -885,7 +949,9 @@ def __():
                 )
 
             # Add reference node and connections
-            ref_node_def = f'    {ref_node}["{len(symbols)} refs{symbols_display}"]'
+            ref_node_def = (
+                f'    {ref_node}["{len(symbols)} refs{symbols_display}"]'
+            )
             mermaid_lines.append(ref_node_def)
             mermaid_lines.append(f"    {to_node} --> {ref_node} --> {from_node}")
             mermaid_lines.append(f"    class {ref_node} reference")

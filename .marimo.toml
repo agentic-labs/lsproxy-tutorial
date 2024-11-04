@@ -12,11 +12,6 @@ dataframes = "rich"
 browser = "default"
 follow_symlink = false
 
-[runtime]
-auto_instantiate = true
-auto_reload = "off"
-on_cell_change = "autorun"
-
 [save]
 autosave = "after_delay"
 autosave_delay = 1000

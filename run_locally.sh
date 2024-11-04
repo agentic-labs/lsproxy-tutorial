@@ -233,7 +233,7 @@ wait_for_server
 
 echo "Running example..."
 if [ "$EDIT_MODE" = true ]; then
-    CHECKOUT_LOCATION=$SCRIPT_DIR/trieve marimo edit $SCRIPT_DIR/tutorial.py
+    BASE_URL=http://localhost:4444/v1 CHECKOUT_LOCATION=$SCRIPT_DIR/trieve marimo edit $SCRIPT_DIR/tutorial.py
 else
-    CHECKOUT_LOCATION=$SCRIPT_DIR/trieve marimo run $SCRIPT_DIR/tutorial.py
+    BASE_URL=http://localhost:4444/v1 CHECKOUT_LOCATION=$SCRIPT_DIR/trieve marimo run $SCRIPT_DIR/tutorial.py
 fi

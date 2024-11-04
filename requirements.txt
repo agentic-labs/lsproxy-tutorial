@@ -1,5 +1,5 @@
 marimo==0.9.14
 lsproxy-sdk==0.1.1
-openai
-requests
-unidiff
+openai==1.53.0
+requests==2.32.3
+unidiff==0.7.5

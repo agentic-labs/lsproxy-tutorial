@@ -44,11 +44,17 @@ def __(mo):
 
 
 @app.cell
-def __(mo):
+def __():
+    return
+
+
+@app.cell
+def __(mo, os):
     # The first step is to create our API client
     from lsproxy import Lsproxy
 
-    api_client = Lsproxy()
+    # Connect to wherever you're running lsproxy
+    api_client = Lsproxy(base_url=os.environ.get("BASE_URL"))
     mo.show_code()
     return Lsproxy, api_client
 

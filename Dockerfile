@@ -27,7 +27,7 @@ RUN chown -R appuser:appuser /mnt/workspace /start.sh /app
 COPY file_options.json tutorial.py ./
 
 ENV CHECKOUT_LOCATION=/mnt/workspace
-ENV HOST_URL=http://localhost:4444/v1
+ENV BASE_URL=http://localhost:4444/v1
 
 EXPOSE 7860
 
